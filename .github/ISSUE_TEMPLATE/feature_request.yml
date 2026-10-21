@@ -1,0 +1,37 @@
+name: Suggestion
+description: Suggest a library, snippet, extension, tool or improvement
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of suggestion?
+      options:
+        - Python library
+        - Snippet
+        - VS Code extension or setting
+        - New tool or language to set up (C compiler, Java, Git, ...)
+        - Translation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: What should be added or changed?
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why is it useful for students?
+      description: Which course or project needs it? How many students would use it?
+    validations:
+      required: true
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Contribution
+      options:
+        - label: I'd like to work on this myself

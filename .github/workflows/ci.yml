@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ShellCheck setup.sh
+        run: shellcheck --severity=warning setup.sh
+
+      - name: Check setup.ps1 syntax
+        shell: pwsh
+        run: |
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile("$PWD/setup.ps1", [ref]$null, [ref]$errors)
+          $errors | ForEach-Object { Write-Host "::error file=setup.ps1,line=$($_.Extent.StartLineNumber)::$($_.Message)" }
+          if ($errors.Count) { exit 1 }
+
+      - name: Check setup.ps1 is ASCII only
+        run: |
+          if grep -nP '[^\x00-\x7F]' setup.ps1; then
+            echo "::error file=setup.ps1::Non-ASCII characters break Windows PowerShell 5.1"
+            exit 1
+          fi
+
+      - name: Check the VS Code profile
+        run: |
+          python3 - <<'EOF'
+          import json, re, sys
+
+          with open("python-dev.code-profile", encoding="utf-8") as f:
+              profile = json.load(f)
+          for key in ("settings", "snippets", "extensions"):
+              json.loads(profile[key])
+          problems = []
+          if "globalState" in profile:
+              problems.append("globalState must be removed (it contains personal data)")
+          text = json.dumps(profile)
+          if re.search(r"[\w.+-]+@[\w-]+\.[a-z]{2,}", text):
+              problems.append("looks like an email address")
+          if re.search(r"Users[\\/]+\w+", text, re.I):
+              problems.append("looks like a home folder path")
+          for p in problems:
+              print(f"::error file=python-dev.code-profile::{p}")
+          sys.exit(1 if problems else 0)
+          EOF
+
+  setup:
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run setup (Linux / macOS)
+        if: runner.os != 'Windows'
+        run: |
+          bash setup.sh --yes || { cat "${TMPDIR:-/tmp}/python-dev-setup.log"; exit 1; }
+          "$HOME/.python-dev/bin/python" -c "import numpy, pandas, matplotlib, rich, pytest; print('imports ok')"
+
+      - name: Run setup twice (must be safe)
+        if: runner.os != 'Windows'
+        run: |
+          bash setup.sh --yes
+          count=$(grep -c "Added by Python Dev setup" "$HOME/.profile")
+          [ "$count" -eq 1 ] || { echo "PATH line added $count times"; exit 1; }
+
+      - name: Run setup (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          .\setup.ps1 -Yes
+          if ($LASTEXITCODE) { Get-Content "$env:TEMP\python-dev-setup.log"; exit 1 }
+          python -c "import numpy, pandas, matplotlib, rich, pytest; print('imports ok')"
+          if ($LASTEXITCODE) { exit 1 }

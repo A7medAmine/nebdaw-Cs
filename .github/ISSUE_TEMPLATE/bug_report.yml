@@ -1,0 +1,66 @@
+name: Bug report
+description: The setup failed or did something wrong
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! The more detail you give, the faster it gets fixed.
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows 11
+        - Windows 10
+        - Ubuntu / Debian / Linux Mint
+        - Fedora / RHEL
+        - Arch / Manjaro
+        - Other Linux
+        - macOS (Apple Silicon)
+        - macOS (Intel)
+    validations:
+      required: true
+  - type: input
+    id: os-version
+    attributes:
+      label: OS version
+      placeholder: "e.g. Windows 11 23H2, Ubuntu 24.04, macOS 15"
+  - type: dropdown
+    id: part
+    attributes:
+      label: Which part?
+      options:
+        - Installing Python
+        - Adding Python to PATH
+        - Installing libraries
+        - VS Code extensions
+        - VS Code profile (settings / snippets)
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead? Screenshots help.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Double-clicked setup.bat
+        2. Answered yes to core libraries
+        3. ...
+  - type: textarea
+    id: log
+    attributes:
+      label: Log file
+      description: |
+        Paste the contents of `python-dev-setup.log`.
+        Windows: `%TEMP%\python-dev-setup.log`. Linux/macOS: `/tmp/python-dev-setup.log`.
+        Remove anything personal (your username, paths) before pasting.
+      render: text

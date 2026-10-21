@@ -120,8 +120,10 @@ need_sudo() {
   if [ "$(id -u)" -ne 0 ]; then
     command -v sudo >/dev/null 2>&1 || die "sudo is required to install system packages"
     SUDO="sudo"
-    info "Your password may be needed to install system packages."
-    sudo -v </dev/tty || die "sudo authentication failed"
+    if ! sudo -n true 2>/dev/null; then
+      info "Your password may be needed to install system packages."
+      sudo -v </dev/tty || die "sudo authentication failed"
+    fi
   fi
 }
 

@@ -1,6 +1,14 @@
-# Python Dev — VS Code profile
+# nebdaw
 
-One file, `python-dev.code-profile`, holding settings, snippets and extensions for Python and C development, plus a setup script that installs Python and common libraries.
+[![CI](https://github.com/A7medAmine/nebdaw-Cs/actions/workflows/ci.yml/badge.svg)](https://github.com/A7medAmine/nebdaw-Cs/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
+*Nebdaw* means "let's start" in Darija. It sets up a CS student's PC in one step: it installs Python and the libraries used in class, adds Python to PATH and gives you a ready-made VS Code profile with themes, formatters and snippets.
+
+It is made for CS students in Algeria and is open to contributions from everyone.
+
+Works on **Windows**, **Linux** and **macOS**.
 
 ## 1. Set up Python
 
@@ -150,3 +158,16 @@ Install one from a terminal with `code --install-extension <ID>`.
 ## Editing
 
 Edit settings and snippets inside VS Code with this profile active, then `Ctrl+Shift+P` → **Profiles: Export Profile...** and overwrite `python-dev.code-profile`.
+
+## Contributing
+
+Everyone is welcome, whether you're fixing a typo or adding a new feature. You can also help without writing code: test the setup on your PC, report bugs, suggest libraries or translate the docs.
+
+- Read the [contributing guide](CONTRIBUTING.md) to get started.
+- Look for issues labelled [`good first issue`](https://github.com/A7medAmine/nebdaw-Cs/labels/good%20first%20issue).
+- Please follow the [code of conduct](CODE_OF_CONDUCT.md).
+- Report security problems privately, as explained in [SECURITY.md](SECURITY.md).
+
+## License
+
+[MIT](LICENSE): free to use, change and share.
