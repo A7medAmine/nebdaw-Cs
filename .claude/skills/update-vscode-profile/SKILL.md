@@ -5,7 +5,7 @@ description: Change the nebdaw VS Code profile (python-dev.code-profile) - setti
 
 # Update the VS Code profile
 
-`python-dev.code-profile` is what students import into VS Code. VS Code installs the extensions listed in it, so **extensions go here, never in the setup scripts**.
+`python-dev.code-profile` is what the setup applies to the student's VS Code (through `apply_profile.py`), and what students can also import by hand. The setup installs the extensions listed in it, so **extensions go here, never in the setup scripts**. Extensions marked `"disabled": true` are not installed by the setup.
 
 ## The file format
 
@@ -65,6 +65,7 @@ Before you write the file, print the decoded value to check how it's laid out. I
 - **Snippets:** every snippet needs a `"scope"` (`"python"`, `"c"`) so it only shows in that language. Update the snippet tables in `README.md`.
 - **Settings:** keep them beginner-friendly. Don't turn on strict type checking or settings that flood a beginner with warnings.
 - **Theme:** if you change the default theme, update "Changing the theme" in `README.md`.
+- **Fonts:** if you change `editor.fontFamily`, update the font list in both setup scripts (`$Fonts` / `FONTS`) so the setup installs the new font, and the fonts line in `README.md`.
 
 ## Privacy check (must pass before committing)
 

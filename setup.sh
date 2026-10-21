@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # Python Dev setup for Linux and macOS.
 # Installs Python 3, creates a shared environment at ~/.python-dev, adds it to PATH
-# and installs the libraries listed in requirements.txt.
+# and installs the libraries listed in requirements.txt. Then it installs the editor
+# fonts and, if VS Code is installed, applies python-dev.code-profile to it:
+# extensions, settings, theme and snippets.
 #
-# It asks no questions. VS Code extensions come with the VS Code profile, not this script.
+# It asks no questions.
 #
 #   bash setup.sh
 #   curl -fsSL https://raw.githubusercontent.com/A7medAmine/nebdaw-Cs/main/setup.sh | bash
@@ -15,7 +17,7 @@ VENV_DIR="${PYDEV_HOME:-$HOME/.python-dev}"
 LOG_FILE="${TMPDIR:-/tmp}/python-dev-setup.log"
 MARKER="# Added by Python Dev setup"
 
-# Where requirements.txt is downloaded from when the script runs without the repo
+# Where repo files are downloaded from when the script runs without the repo
 # (curl ... | bash). NEBDAW_URL lets CI test a branch or commit.
 REPO_URL="${NEBDAW_URL:-https://raw.githubusercontent.com/A7medAmine/nebdaw-Cs/main}"
 # Empty when the script is piped into bash.
@@ -26,11 +28,20 @@ fi
 # Retry and wait longer than pip's defaults so slow connections don't fail the install.
 PIP_INSTALL=(-m pip install --upgrade --disable-pip-version-check --retries 5 --timeout 60)
 
+# Fonts the VS Code profile uses, from Google Fonts (OFL license), pinned to one commit.
+# Each entry is "Family|file file ...".
+FONT_URL="https://raw.githubusercontent.com/google/fonts/45e3d5269e4a17d823f6d84470bc084dc5ae46f6/ofl"
+FONTS=(
+  "Cascadia Mono|cascadiamono/CascadiaMono[wght].ttf cascadiamono/CascadiaMono-Italic[wght].ttf"
+  "Noto Kufi Arabic|notokufiarabic/NotoKufiArabic[wght].ttf"
+)
+
 for arg in "$@"; do
   case "$arg" in
     -y|--yes|-a|--all) ;;   # no questions are left; kept so old commands still work
     -h|--help) printf 'Python Dev setup. Installs Python, adds it to PATH and installs the
-libraries in requirements.txt. It takes no options and asks no questions.
+libraries in requirements.txt, the editor fonts and the VS Code profile.
+It takes no options and asks no questions.
 '; exit 0 ;;
     *) echo "Unknown option: $arg"; exit 1 ;;
   esac
@@ -49,13 +60,13 @@ case "${LC_ALL:-}${LC_CTYPE:-}${LANG:-}" in
 esac
 
 STEP=0
-TOTAL_STEPS=4
+TOTAL_STEPS=6
 
 banner() {
   printf "\n${CYAN}${BOLD}"
   printf "  +------------------------------------------+\n"
   printf "  |          Python Dev  -  Setup            |\n"
-  printf "  |  Python + PATH + libraries, one command  |\n"
+  printf "  |  Python, libraries, fonts and VS Code    |\n"
   printf "  +------------------------------------------+${RESET}\n"
   printf "  ${DIM}Log file: %s${RESET}\n" "$LOG_FILE"
 }
@@ -218,6 +229,82 @@ read_packages() {
   return 0
 }
 
+# Download $1 to the file $2.
+fetch() {
+  if command -v curl >/dev/null 2>&1; then
+    curl -fsSL --retry 3 -o "$2" "$1"
+  elif command -v wget >/dev/null 2>&1; then
+    wget -qO "$2" "$1"
+  else
+    echo "Neither curl nor wget is installed"
+    return 1
+  fi
+}
+
+# Put repo file $1 at $2: the copy next to this script, or a download from $REPO_URL.
+repo_file() {
+  if [ -n "$SCRIPT_DIR" ] && [ -f "$SCRIPT_DIR/$1" ]; then
+    cp "$SCRIPT_DIR/$1" "$2"
+  else
+    fetch "$REPO_URL/$1" "$2"
+  fi
+}
+
+# ---------- fonts ----------
+font_dir() {
+  if [ "$OS" = macos ]; then echo "$HOME/Library/Fonts"; else echo "${XDG_DATA_HOME:-$HOME/.local/share}/fonts/nebdaw"; fi
+}
+
+# Local file name for a google/fonts path: CascadiaMono[wght].ttf -> CascadiaMono.ttf
+font_file() { local leaf=${1##*/}; echo "${leaf/\[wght\]/}"; }
+
+# $1 is the family, the rest are its files.
+font_installed() {
+  local family=$1 file dir
+  shift
+  if command -v fc-list >/dev/null 2>&1 && fc-list : family 2>/dev/null | grep -qiF "$family"; then
+    return 0
+  fi
+  dir=$(font_dir)
+  for file in "$@"; do
+    [ -f "$dir/$(font_file "$file")" ] || return 1
+  done
+}
+
+install_font_files() {
+  local dir file url out
+  dir=$(font_dir)
+  mkdir -p "$dir" || return 1
+  for file in "$@"; do
+    url="$FONT_URL/$file"
+    url=${url//\[/%5B}
+    url=${url//\]/%5D}
+    out="$dir/$(font_file "$file")"
+    fetch "$url" "$out.part" && mv -f "$out.part" "$out" || { rm -f "$out.part"; return 1; }
+  done
+}
+
+# ---------- VS Code ----------
+CODE=""
+find_code() {
+  local app
+  if command -v code >/dev/null 2>&1; then
+    CODE=$(command -v code)
+    return 0
+  fi
+  for app in "/Applications/Visual Studio Code.app" "$HOME/Applications/Visual Studio Code.app"; do
+    if [ -x "$app/Contents/Resources/app/bin/code" ]; then
+      CODE="$app/Contents/Resources/app/bin/code"
+      return 0
+    fi
+  done
+  return 1
+}
+
+vscode_user_dir() {
+  if [ "$OS" = macos ]; then echo "$HOME/Library/Application Support/Code/User"; else echo "${XDG_CONFIG_HOME:-$HOME/.config}/Code/User"; fi
+}
+
 # ---------- main ----------
 # Everything runs from main, so a piped or half-downloaded script never runs partly.
 main() {
@@ -276,6 +363,54 @@ main() {
       esac ;;
   esac
 
+  step "Installing fonts"
+  FONTS_FAILED=()
+  local entry family files
+  for entry in "${FONTS[@]}"; do
+    family=${entry%%|*}
+    files=${entry#*|}
+    # shellcheck disable=SC2086 # files is a space-separated list
+    if font_installed "$family" $files; then
+      ok "Already installed: $family"
+    else
+      # shellcheck disable=SC2086
+      spin "Installing $family" install_font_files $files || FONTS_FAILED+=("$family")
+    fi
+  done
+  if [ "$OS" = linux ] && command -v fc-cache >/dev/null 2>&1; then
+    fc-cache -f "$(font_dir)" >>"$LOG_FILE" 2>&1 || true
+  fi
+
+  # VS Code can't import a .code-profile from the command line, so apply_profile.py
+  # puts the profile's settings and snippets into the default profile, and the
+  # extensions it lists are installed one by one.
+  step "Setting up VS Code"
+  VSCODE="not found"
+  EXT_FAILED=()
+  if ! find_code; then
+    warn "VS Code not found. Install it from https://code.visualstudio.com and run this setup again."
+  else
+    local tmp ext extensions
+    tmp=$(mktemp -d "${TMPDIR:-/tmp}/nebdaw.XXXXXX")
+    if ! { repo_file apply_profile.py "$tmp/apply_profile.py" && repo_file python-dev.code-profile "$tmp/profile"; } >>"$LOG_FILE" 2>&1; then
+      bad "Could not get the VS Code profile from $REPO_URL"
+      VSCODE="failed"
+    else
+      VSCODE="profile applied"
+      spin "Applying settings, theme and snippets" "$VPY" "$tmp/apply_profile.py" "$tmp/profile" settings "$(vscode_user_dir)" ||
+        VSCODE="settings not applied"
+      extensions=$("$VPY" "$tmp/apply_profile.py" "$tmp/profile" extensions 2>>"$LOG_FILE") || extensions=""
+      n=$(printf '%s\n' "$extensions" | grep -c . || true)
+      i=0
+      while IFS= read -r ext; do
+        [ -n "$ext" ] || continue
+        i=$((i + 1))
+        spin "$(bar "$i" "$n")  $ext" "$CODE" --install-extension "$ext" || EXT_FAILED+=("$ext")
+      done <<<"$extensions"
+    fi
+    rm -rf "$tmp"
+  fi
+
   # ---------- summary ----------
   printf "\n${GREEN}${BOLD}  +------------------------------------------+\n"
   printf "  |              Setup complete              |\n"
@@ -283,12 +418,17 @@ main() {
   printf "  Python       %s\n" "$("$VPY" --version 2>&1)"
   printf "  Environment  %s\n" "${VENV_DIR/#$HOME/~}"
   printf "  Libraries    %d installed\n" "$((${#PACKAGES[@]} - ${#FAILED[@]}))"
+  printf "  Fonts        %d of %d ready\n" "$((${#FONTS[@]} - ${#FONTS_FAILED[@]}))" "${#FONTS[@]}"
+  printf "  VS Code      %s\n" "$VSCODE"
+  FAILED+=(${FONTS_FAILED[@]+"${FONTS_FAILED[@]}"} ${EXT_FAILED[@]+"${EXT_FAILED[@]}"})
   if [ "${#FAILED[@]}" -gt 0 ]; then
     printf "  ${RED}Failed${RESET}       %s\n" "${FAILED[*]}"
     printf "  ${DIM}Details in %s${RESET}\n" "$LOG_FILE"
   fi
   printf "\n  ${BOLD}Next:${RESET} open a new terminal, then try\n"
   printf "    ${CYAN}python -c \"import sys; print(sys.executable)\"${RESET}\n\n"
+  [ "$VSCODE" = "profile applied" ] && info "Restart VS Code to see the new theme and fonts." && echo
+  return 0
 }
 
 main "$@"

@@ -54,6 +54,25 @@ jobs:
           sys.exit(1 if problems else 0)
           EOF
 
+      - name: Check apply_profile.py
+        run: |
+          user="$RUNNER_TEMP/vscode-user"
+          mkdir -p "$user"
+          printf '{\n  // a comment\n  "editor.fontSize": 12,\n  "my.setting": true,\n}\n' >"$user/settings.json"
+          python3 apply_profile.py python-dev.code-profile settings "$user"
+          # A second run must change nothing.
+          if python3 apply_profile.py python-dev.code-profile settings "$user" | grep '^Updated'; then exit 1; fi
+          python3 - "$user" <<'EOF'
+          import json, sys
+          with open(sys.argv[1] + "/settings.json", encoding="utf-8") as f:
+              settings = json.load(f)
+          assert settings["my.setting"] is True, "user setting was lost"
+          assert settings["editor.fontSize"] == 16, "profile setting was not applied"
+          EOF
+          test -f "$user/settings.json.nebdaw-backup"
+          test -f "$user/snippets/python.code-snippets"
+          python3 apply_profile.py python-dev.code-profile extensions | grep -qx ms-python.python
+
   setup:
     needs: lint
     strategy:

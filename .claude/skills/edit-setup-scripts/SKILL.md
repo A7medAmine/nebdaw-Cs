@@ -14,7 +14,7 @@ description: Change the nebdaw setup scripts (setup.ps1 for Windows, setup.sh fo
 
 ## 1. Understand the structure first
 
-Both scripts have the same four steps: **Checking Python**, **Preparing pip** (Windows) / **Creating the Python Dev environment** (Linux, macOS), **Adding Python to PATH**, **Installing libraries**, then a summary. Read the whole script you're changing before you edit it, and find the matching code in the other script.
+Both scripts have the same six steps: **Checking Python**, **Preparing pip** (Windows) / **Creating the Python Dev environment** (Linux, macOS), **Adding Python to PATH**, **Installing libraries**, **Installing fonts**, **Setting up VS Code**, then a summary. The VS Code step runs `apply_profile.py` with the Python found in step 1; change that file instead of parsing the profile in a script. Read the whole script you're changing before you edit it, and find the matching code in the other script.
 
 Helpers to reuse instead of rewriting:
 
@@ -25,6 +25,8 @@ Helpers to reuse instead of rewriting:
 | Stop with an error | `Stop-Setup` | `die` |
 | Run a command with a spinner, output to the log | `Invoke-Spin` | `spin` |
 | Run pip install | `$PipInstall` | `"${PIP_INSTALL[@]}"` |
+| Get a repo file (local or downloaded) | `Get-RepoFile` | `repo_file` |
+| Download a URL to a file | `Invoke-WebRequest -OutFile` | `fetch` |
 | Admin rights | (user install, none needed) | `need_sudo`, then `$SUDO` |
 
 ## 2. Rules that break things if ignored

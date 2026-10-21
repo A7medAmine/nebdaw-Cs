@@ -2,8 +2,10 @@
 Python Dev setup for Windows.
 Installs Python 3 if needed, makes sure it is on PATH and installs common libraries
 into the same Python that "python" runs. The libraries come from requirements.txt.
+Then it installs the editor fonts and, if VS Code is installed, applies
+python-dev.code-profile to it: extensions, settings, theme and snippets.
 
-It asks no questions. VS Code extensions come with the VS Code profile, not this script.
+It asks no questions.
 
   setup.bat            double-click works too
   irm https://raw.githubusercontent.com/A7medAmine/nebdaw-Cs/main/setup.ps1 | iex
@@ -19,7 +21,7 @@ variables or settings behind in the user's PowerShell session.
     $PyVersion = '3.13.17'
     $MinMinor = 10
     $LogFile = Join-Path $env:TEMP 'python-dev-setup.log'
-    # Where requirements.txt is downloaded from when the script runs without the repo
+    # Where repo files are downloaded from when the script runs without the repo
     # (irm ... | iex). NEBDAW_URL lets CI test a branch or commit.
     $RepoUrl = if ($env:NEBDAW_URL) { $env:NEBDAW_URL } else { 'https://raw.githubusercontent.com/A7medAmine/nebdaw-Cs/main' }
     # Empty when the script is piped into iex.
@@ -31,16 +33,23 @@ variables or settings behind in the user's PowerShell session.
     # Retry and wait longer than pip's defaults so slow connections don't fail the install.
     $PipInstall = @('-m', 'pip', 'install', '--upgrade', '--disable-pip-version-check', '--retries', '5', '--timeout', '60')
 
+    # Fonts the VS Code profile uses, from Google Fonts (OFL license), pinned to one commit.
+    $FontUrl = 'https://raw.githubusercontent.com/google/fonts/45e3d5269e4a17d823f6d84470bc084dc5ae46f6/ofl'
+    $Fonts = @(
+        @{ Name = 'Cascadia Mono'; Files = @('cascadiamono/CascadiaMono[wght].ttf', 'cascadiamono/CascadiaMono-Italic[wght].ttf') },
+        @{ Name = 'Noto Kufi Arabic'; Files = @('notokufiarabic/NotoKufiArabic[wght].ttf') }
+    )
+
     # ---------- look ----------
     $Progress = @{ Step = 0 }
     $Interactive = -not [Console]::IsOutputRedirected
-    $TotalSteps = 4
+    $TotalSteps = 6
 
     function Write-Banner {
         Write-Host ''
         Write-Host '  +------------------------------------------+' -ForegroundColor Cyan
         Write-Host '  |          Python Dev  -  Setup            |' -ForegroundColor Cyan
-        Write-Host '  |  Python + PATH + libraries, one command  |' -ForegroundColor Cyan
+        Write-Host '  |  Python, libraries, fonts and VS Code    |' -ForegroundColor Cyan
         Write-Host '  +------------------------------------------+' -ForegroundColor Cyan
         Write-Host "  Log file: $LogFile" -ForegroundColor DarkGray
     }
@@ -221,6 +230,78 @@ public static extern IntPtr SendMessageTimeout(IntPtr hWnd, uint Msg, UIntPtr wP
         return @((Get-RequirementsText) -split "`r?`n" | ForEach-Object { ($_ -replace '#.*', '').Trim() } | Where-Object { $_ })
     }
 
+    # A repo file: the copy next to this script, or a download from $RepoUrl.
+    # Returns its path, or $null if it can't be had.
+    function Get-RepoFile([string]$Name) {
+        $local = if ($ScriptDir) { Join-Path $ScriptDir $Name }
+        if ($local -and (Test-Path $local)) { return $local }
+        $dest = Join-Path $env:TEMP "nebdaw-$Name"
+        try {
+            Invoke-WebRequest -Uri "$RepoUrl/$Name" -OutFile $dest -UseBasicParsing
+            return $dest
+        } catch {
+            Add-Content -Path $LogFile -Value "$RepoUrl/$Name : $($_.Exception.Message)"
+            return $null
+        }
+    }
+
+    # ---------- fonts ----------
+    $FontKey = 'HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Fonts'
+
+    function Test-Font([string]$Name) {
+        foreach ($key in 'HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Fonts', $FontKey) {
+            $item = Get-Item $key -ErrorAction SilentlyContinue
+            if ($item -and ($item.GetValueNames() | Where-Object { $_ -like "$Name *" })) { return $true }
+        }
+        return $false
+    }
+
+    # Per-user install, so no admin rights are needed. AddFontResource makes the font
+    # usable right away, without signing out.
+    function Install-Font($Font) {
+        if (-not ('Win32.FontMethods' -as [type])) {
+            Add-Type -Namespace Win32 -Name FontMethods -MemberDefinition @'
+[DllImport("gdi32.dll", CharSet = CharSet.Unicode)]
+public static extern int AddFontResourceW(string lpFileName);
+'@
+        }
+        $dir = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\Fonts'
+        if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir | Out-Null }
+        if (-not (Test-Path $FontKey)) { New-Item -Path $FontKey | Out-Null }
+        Write-Host "  Downloading $($Font.Name) ..." -ForegroundColor Cyan -NoNewline
+        try {
+            foreach ($file in $Font.Files) {
+                $leaf = (Split-Path $file -Leaf) -replace '\[wght\]', ''
+                $path = Join-Path $dir $leaf
+                $url = "$FontUrl/" + ($file -replace '\[', '%5B' -replace '\]', '%5D')
+                Add-Content -Path $LogFile -Value "`r`n> download $url"
+                Invoke-WebRequest -Uri $url -OutFile "$path.part" -UseBasicParsing
+                Move-Item -LiteralPath "$path.part" -Destination $path -Force
+                $style = if ($leaf -like '*-Italic*') { ' Italic' } else { '' }
+                Set-ItemProperty -Path $FontKey -Name "$($Font.Name)$style (TrueType)" -Value $path
+                [void][Win32.FontMethods]::AddFontResourceW($path)
+            }
+            Write-Host "`r" -NoNewline
+            Write-Ok "Installed $($Font.Name)"
+            return $true
+        } catch {
+            Write-Host ''
+            Add-Content -Path $LogFile -Value $_.Exception.Message
+            Write-Bad "Could not install $($Font.Name)"
+            return $false
+        }
+    }
+
+    # ---------- VS Code ----------
+    function Find-VSCode {
+        $cmd = Get-Command 'code.cmd' -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($cmd) { return $cmd.Source }
+        foreach ($path in "$env:LOCALAPPDATA\Programs\Microsoft VS Code\bin\code.cmd", "$env:ProgramFiles\Microsoft VS Code\bin\code.cmd") {
+            if (Test-Path $path) { return $path }
+        }
+        return $null
+    }
+
     # ---------- main ----------
     try {
         Set-Content -Path $LogFile -Value "Python Dev setup $(Get-Date -Format s)"
@@ -284,6 +365,43 @@ public static extern IntPtr SendMessageTimeout(IntPtr hWnd, uint Msg, UIntPtr wP
             if (-not (Invoke-Spin 'Checking that numpy works' $python @('-c', 'import numpy'))) { $failed += 'numpy' }
         }
 
+        Write-Step 'Installing fonts'
+        $fontsFailed = @()
+        foreach ($font in $Fonts) {
+            if (Test-Font $font.Name) { Write-Ok "Already installed: $($font.Name)" }
+            elseif (-not (Install-Font $font)) { $fontsFailed += $font.Name }
+        }
+
+        # VS Code can't import a .code-profile from the command line, so apply_profile.py
+        # puts the profile's settings and snippets into the default profile, and the
+        # extensions it lists are installed one by one.
+        Write-Step 'Setting up VS Code'
+        $vscode = 'not found'
+        $extFailed = @()
+        $code = Find-VSCode
+        if (-not $code) {
+            Write-Warn 'VS Code not found. Install it from https://code.visualstudio.com and run this setup again.'
+        } else {
+            $helper = Get-RepoFile 'apply_profile.py'
+            $profileFile = Get-RepoFile 'python-dev.code-profile'
+            if (-not ($helper -and $profileFile)) {
+                Write-Bad "Could not get the VS Code profile from $RepoUrl"
+                $vscode = 'failed'
+            } else {
+                $userDir = Join-Path $env:APPDATA 'Code\User'
+                $vscode = 'profile applied'
+                if (-not (Invoke-Spin 'Applying settings, theme and snippets' $python @($helper, $profileFile, 'settings', $userDir))) {
+                    $vscode = 'settings not applied'
+                }
+                $extensions = @(& $python $helper $profileFile extensions 2>$null | Where-Object { $_ })
+                for ($i = 0; $i -lt $extensions.Count; $i++) {
+                    $ext = $extensions[$i]
+                    $label = "$(Get-Bar ($i + 1) $extensions.Count)  $ext"
+                    if (-not (Invoke-Spin $label $code @('--install-extension', $ext))) { $extFailed += $ext }
+                }
+            }
+        }
+
         # ---------- summary ----------
         Write-Host ''
         Write-Host '  +------------------------------------------+' -ForegroundColor Green
@@ -292,6 +410,9 @@ public static extern IntPtr SendMessageTimeout(IntPtr hWnd, uint Msg, UIntPtr wP
         Write-Host "  Python       $(& $python --version 2>&1)"
         Write-Host "  Location     $python"
         Write-Host "  Libraries    $($packages.Count - $failed.Count) installed"
+        Write-Host "  Fonts        $($Fonts.Count - $fontsFailed.Count) of $($Fonts.Count) ready"
+        Write-Host "  VS Code      $vscode"
+        $failed += $fontsFailed + $extFailed
         if ($failed.Count -gt 0) {
             Write-Host '  Failed       ' -ForegroundColor Red -NoNewline
             Write-Host ($failed -join ' ')
@@ -301,6 +422,7 @@ public static extern IntPtr SendMessageTimeout(IntPtr hWnd, uint Msg, UIntPtr wP
         Write-Host '  Next: ' -ForegroundColor White -NoNewline
         Write-Host 'open a new terminal, then try'
         Write-Host '    python -c "import sys; print(sys.executable)"' -ForegroundColor Cyan
+        if ($vscode -eq 'profile applied') { Write-Info 'Restart VS Code to see the new theme and fonts.' }
         Write-Host ''
     } catch {
         if ("$_" -ne $Stopped) {

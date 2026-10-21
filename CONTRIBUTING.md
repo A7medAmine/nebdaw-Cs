@@ -39,6 +39,7 @@ Thanks for helping! nebdaw exists so that CS students can go from a fresh PC to 
 | `setup.sh` | Linux and macOS setup (Bash) |
 | `requirements.txt` | Libraries the setup scripts install |
 | `python-dev.code-profile` | VS Code profile: settings, snippets and extensions |
+| `apply_profile.py` | Applies the profile to the student's VS Code; both setup scripts run it |
 | `.github/workflows/ci.yml` | Checks that run on every pull request |
 | `AGENTS.md`, `CLAUDE.md` | Rules for AI coding agents |
 | `.claude/skills/` | Step-by-step guides for common tasks, for people and AI agents |
@@ -52,7 +53,7 @@ Thanks for helping! nebdaw exists so that CS students can go from a fresh PC to 
 
 - Safe to run twice. A second run must not duplicate PATH entries or break an existing install.
 - No questions. The scripts run start to finish on their own.
-- VS Code extensions belong in `python-dev.code-profile`, not in the scripts.
+- VS Code extensions belong in `python-dev.code-profile`, not in the scripts. The scripts install them by reading the profile through `apply_profile.py`.
 - Ask for admin rights (sudo) only for steps that need them.
 - Send command output to the log file and keep the screen to short status lines.
 - No new dependencies. The scripts must work on a fresh system with nothing installed.
