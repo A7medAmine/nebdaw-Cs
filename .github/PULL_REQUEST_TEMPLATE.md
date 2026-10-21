@@ -12,3 +12,4 @@
 - [ ] Tested on at least one real system (named above)
 - [ ] `README.md` updated if behaviour, libraries or snippets changed
 - [ ] No personal data in `python-dev.code-profile`
+- [ ] If an AI tool helped, I read and tested every changed line (say which tool above)

@@ -12,15 +12,25 @@ Works on **Windows**, **Linux** and **macOS**.
 
 ## 1. Set up Python
 
-The setup script installs Python 3 if it is missing, adds it to PATH, and installs the libraries. It asks no questions. The VS Code extensions come with the profile in step 2.
+The setup installs Python 3 if it is missing, adds it to PATH, and installs the libraries. It asks no questions. The VS Code extensions come with the profile in step 2.
 
-**Windows:** double-click `setup.bat`.
+Paste one line into a terminal. You don't need to download anything first.
 
-**Linux / macOS:**
+**Windows:** open **PowerShell** (Start menu → type `PowerShell`) and run:
+
+```powershell
+irm https://raw.githubusercontent.com/A7medAmine/nebdaw-Cs/main/setup.ps1 | iex
+```
+
+**Linux / macOS:** open a terminal and run:
 
 ```sh
-bash setup.sh
+curl -fsSL https://raw.githubusercontent.com/A7medAmine/nebdaw-Cs/main/setup.sh | bash
 ```
+
+These lines download the setup script from this repository and run it. Only paste them from this page, and never from a link someone sends you, because a one-liner runs whatever the address serves.
+
+**Offline or from a downloaded copy:** on Windows double-click `setup.bat`; on Linux and macOS run `bash setup.sh` in the project folder.
 
 The libraries come from [`requirements.txt`](requirements.txt). For now that is only **numpy**; the other libraries are listed there as comments and will be turned on when the course needs them. At the end the setup checks that numpy imports.
 
@@ -37,7 +47,12 @@ Open a new terminal when it finishes. A full log is written to `python-dev-setup
 
 1. Open VS Code.
 2. `Ctrl+Shift+P` → **Profiles: Import Profile...**
-3. **Select File...** → pick `python-dev.code-profile`.
+3. Paste this URL, or choose **Select File...** and pick `python-dev.code-profile` from a downloaded copy:
+
+   ```
+   https://raw.githubusercontent.com/A7medAmine/nebdaw-Cs/main/python-dev.code-profile
+   ```
+
 4. Click **Create Profile**. VS Code installs the extensions automatically.
 
 Fonts needed: **Cascadia Mono** (editor) and **Aljazeera** (Arabic fallback).
@@ -151,6 +166,12 @@ Install one from a terminal with `code --install-extension <ID>`.
 ## Editing
 
 Edit settings and snippets inside VS Code with this profile active, then `Ctrl+Shift+P` → **Profiles: Export Profile...** and overwrite `python-dev.code-profile`.
+
+## Using AI to code
+
+Many students code with an AI assistant (GitHub Copilot, ChatGPT, Claude, Cursor and others). [docs/using-ai.md](docs/using-ai.md) explains how to use one with this setup: asking it to fix a setup error from the log, learning with it instead of copying from it, and which assistants are free for students.
+
+If you use an AI agent to contribute to this repository, it reads [AGENTS.md](AGENTS.md) for the project rules, and step-by-step guides live in [`.claude/skills/`](.claude/skills/).
 
 ## Contributing
 

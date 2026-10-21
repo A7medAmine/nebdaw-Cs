@@ -40,10 +40,13 @@ Thanks for helping! nebdaw exists so that CS students can go from a fresh PC to 
 | `requirements.txt` | Libraries the setup scripts install |
 | `python-dev.code-profile` | VS Code profile: settings, snippets and extensions |
 | `.github/workflows/ci.yml` | Checks that run on every pull request |
+| `AGENTS.md`, `CLAUDE.md` | Rules for AI coding agents |
+| `.claude/skills/` | Step-by-step guides for common tasks, for people and AI agents |
+| `docs/using-ai.md` | Guide for students who code with an AI assistant |
 
 ## Rules for the setup scripts
 
-`setup.ps1` and `setup.sh` must stay in step: same four steps and the same options. Both read the library list from `requirements.txt`. If you change one, change the other, or say in the PR why only one needs it.
+`setup.ps1` and `setup.sh` must stay in step: same four steps and the same options. Each one must work both from the repo and piped from GitHub (`irm ... | iex`, `curl ... | bash`); the [edit-setup-scripts guide](.claude/skills/edit-setup-scripts/SKILL.md) explains what that means for your code. Both read the library list from `requirements.txt`. If you change one, change the other, or say in the PR why only one needs it.
 
 **Both scripts**
 
@@ -86,7 +89,7 @@ Thanks for helping! nebdaw exists so that CS students can go from a fresh PC to 
 
 ## Testing your change
 
-Every pull request runs CI. It lints both scripts, checks the profile file, and runs the full setup on Windows, Ubuntu and macOS.
+Every pull request runs CI. It lints both scripts, checks the profile file, and runs the full setup on Windows, Ubuntu and macOS, both piped (the way students run it) and from the repo.
 
 Run the quick checks locally before pushing:
 
@@ -116,6 +119,16 @@ Both scripts write a full log to `python-dev-setup.log` in the temp folder:
 - Windows: `%TEMP%\python-dev-setup.log`
 - Linux / macOS: `/tmp/python-dev-setup.log` (or `$TMPDIR` on macOS)
 
+## Using AI tools
+
+You're welcome to use AI assistants and agents to contribute. The repository is set up for them: [`AGENTS.md`](AGENTS.md) holds the rules they read automatically, and [`.claude/skills/`](.claude/skills/) has task guides (adding a library, editing the scripts, updating the profile, troubleshooting). The guides are useful to read even without AI.
+
+You stay responsible for what you submit:
+
+- Read and understand every changed line before you open the PR.
+- Test it on a real system. "The AI said it works" is not a test.
+- Say in the PR that an AI helped.
+
 ## Commit messages
 
 Short and in the imperative, with a type prefix:
@@ -134,6 +147,7 @@ Common types: `feat`, `fix`, `docs`, `ci`, `refactor`, `chore`.
 - [ ] Tested on at least one real system, which is named in the PR
 - [ ] `README.md` updated if behaviour, libraries or snippets changed
 - [ ] No personal data in the profile file
+- [ ] If an AI helped, I read and tested every changed line and said so in the PR
 - [ ] CI is green
 
 ## Code of conduct

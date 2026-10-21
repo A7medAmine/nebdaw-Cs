@@ -64,20 +64,36 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Run setup (Linux / macOS)
+      # Students run the setup as a one-liner (curl | bash, irm | iex), so test that first,
+      # from a folder without requirements.txt. NEBDAW_URL makes it download this commit's list.
+      - name: Run setup piped (Linux / macOS)
+        if: runner.os != 'Windows'
+        working-directory: ${{ runner.temp }}
+        env:
+          NEBDAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}
+        run: |
+          cat "$GITHUB_WORKSPACE/setup.sh" | bash || { cat "${TMPDIR:-/tmp}/python-dev-setup.log"; exit 1; }
+          "$HOME/.python-dev/bin/python" -c "import numpy; print('imports ok')"
+
+      - name: Run setup from the repo (Linux / macOS)
         if: runner.os != 'Windows'
         run: |
           bash setup.sh || { cat "${TMPDIR:-/tmp}/python-dev-setup.log"; exit 1; }
-          "$HOME/.python-dev/bin/python" -c "import numpy; print('imports ok')"
-
-      - name: Run setup twice (must be safe)
-        if: runner.os != 'Windows'
-        run: |
-          bash setup.sh
           count=$(grep -c "Added by Python Dev setup" "$HOME/.profile")
           [ "$count" -eq 1 ] || { echo "PATH line added $count times"; exit 1; }
 
-      - name: Run setup (Windows)
+      - name: Run setup piped (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        working-directory: ${{ runner.temp }}
+        env:
+          NEBDAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}
+        run: |
+          Get-Content "$env:GITHUB_WORKSPACE\setup.ps1" -Raw | Invoke-Expression
+          python -c "import numpy; print('imports ok')"
+          if ($LASTEXITCODE) { Get-Content "$env:TEMP\python-dev-setup.log"; exit 1 }
+
+      - name: Run setup from the repo (Windows)
         if: runner.os == 'Windows'
         shell: powershell
         run: |
