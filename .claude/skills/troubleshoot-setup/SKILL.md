@@ -33,6 +33,9 @@ Each command in the log starts with `>` (Windows) or `$` (Linux, macOS), followe
 | `Python's venv module is missing` | Distro splits venv out | Install `python3-venv` (or the distro's equivalent) and re-run |
 | `Unsupported system. On Windows run setup.bat instead.` | `setup.sh` was run in Git Bash or MSYS on Windows | Use the PowerShell one-liner instead |
 | Setup finished, but `python` isn't found in a new terminal | PATH change not picked up | Sign out and back in (Windows), or open a new terminal / run `source ~/.profile` (Linux, macOS) |
+| `VS Code      not found` in the summary | VS Code wasn't installed, or `code` isn't on PATH (macOS: VS Code not in Applications) | Install VS Code, then run the setup again |
+| Theme or font didn't change in VS Code | VS Code was open during the setup | Restart VS Code. The old settings are in `settings.json.nebdaw-backup` in the VS Code user folder |
+| An extension is listed as failed | Slow connection, or the Marketplace was unreachable | Run the setup again, or `code --install-extension <ID>` |
 | VS Code doesn't find the libraries | VS Code is using a different interpreter | `Ctrl+Shift+P` → **Python: Select Interpreter** → pick the one from the setup summary (`Location` on Windows, `~/.python-dev/bin/python` on Linux and macOS) |
 | `irm ... \| iex` shows a red execution-policy or TLS error | Old Windows 10 PowerShell settings | Download the repo ZIP and double-click `setup.bat` instead |
 

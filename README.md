@@ -12,7 +12,9 @@ Works on **Windows**, **Linux** and **macOS**.
 
 ## 1. Set up Python
 
-The setup installs Python 3 if it is missing, adds it to PATH, and installs the libraries. It asks no questions. The VS Code extensions come with the profile in step 2.
+The setup installs Python 3 if it is missing, adds it to PATH, installs the libraries and the editor fonts, and sets up VS Code with the nebdaw profile (theme, extensions, settings and snippets). It asks no questions.
+
+Install [VS Code](https://code.visualstudio.com) **before** you run the setup, so the setup can find it. If VS Code isn't installed, everything else still runs and you can run the setup again later.
 
 Paste one line into a terminal. You don't need to download anything first.
 
@@ -41,9 +43,16 @@ How it works on each system:
 - **macOS:** installs Python with Homebrew, or the python.org installer if Homebrew is missing.
 - **Linux and macOS:** the libraries go into a shared environment at `~/.python-dev`, which is added to PATH in your shell startup files. Modern Linux and Homebrew block installing libraries into the system Python, so a separate environment is needed.
 
-Open a new terminal when it finishes. A full log is written to `python-dev-setup.log` in your temp folder.
+- **Fonts:** downloads **Cascadia Mono** (code) and **Noto Kufi Arabic** (Arabic text) from Google Fonts and installs them for your user only, unless they are already installed. On Linux they go to `~/.local/share/fonts/nebdaw`, on macOS to `~/Library/Fonts`.
+- **VS Code:** VS Code can't import a profile from the command line, so the setup applies the profile to your normal (Default) VS Code profile instead: it installs the extensions listed in `python-dev.code-profile`, adds its settings and theme to your `settings.json` and its snippets to your snippets folder. Your other settings are kept. Before the first change it saves a copy of each file as `<name>.nebdaw-backup` next to it.
 
-## 2. Install the profile
+Open a new terminal when it finishes, and restart VS Code. A full log is written to `python-dev-setup.log` in your temp folder.
+
+Running the setup again puts back the profile's theme and settings. If you changed the theme yourself afterwards, change it again after the run.
+
+## 2. Install the profile (optional)
+
+The setup already applied the profile to VS Code. Import it by hand only if you didn't have VS Code when you ran the setup and don't want to run it again, or if you want it as a separate VS Code profile.
 
 1. Open VS Code.
 2. `Ctrl+Shift+P` → **Profiles: Import Profile...**
@@ -55,11 +64,11 @@ Open a new terminal when it finishes. A full log is written to `python-dev-setup
 
 4. Click **Create Profile**. VS Code installs the extensions automatically.
 
-Fonts needed: **Cascadia Mono** (editor) and **Aljazeera** (Arabic fallback).
+The profile uses the fonts **Cascadia Mono** and **Noto Kufi Arabic**. The setup installs them; if you import the profile by hand, install them from [Google Fonts](https://fonts.google.com/?query=Cascadia+Mono) yourself.
 
 ## What's inside
 
-- Dracula theme, Material icons, font `Cascadia Mono, 'aljazeera', monospace` size 16.
+- Dracula theme, Material icons, font `Cascadia Mono, 'Noto Kufi Arabic', monospace` size 16.
 - Format on save: Ruff for Python, Prettier for HTML/JS, C/C++ tools for C.
 - Pylance basic type checking, ruler at 88 columns.
 - Code Runner runs in the terminal, so `input()` and `scanf` work.

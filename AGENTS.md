@@ -4,7 +4,7 @@ Instructions for AI coding agents (Claude Code, Codex, Copilot, Cursor, Gemini a
 
 ## What this project is
 
-nebdaw sets up a CS student's PC in one step: it installs Python, adds it to PATH, installs the course libraries, and ships a VS Code profile. The users are beginners on old laptops and slow connections, mostly in Algeria. Every change should keep the setup simple, quiet and safe to run twice.
+nebdaw sets up a CS student's PC in one step: it installs Python, adds it to PATH, installs the course libraries and editor fonts, and applies a VS Code profile. The users are beginners on old laptops and slow connections, mostly in Algeria. Every change should keep the setup simple, quiet and safe to run twice.
 
 ## Files
 
@@ -15,6 +15,7 @@ nebdaw sets up a CS student's PC in one step: it installs Python, adds it to PAT
 | `setup.sh` | Linux and macOS setup. Runs as a file (`bash setup.sh`) or piped (`curl ... \| bash`). |
 | `requirements.txt` | The only list of libraries. Both scripts read it; when piped they download it from GitHub. |
 | `python-dev.code-profile` | VS Code profile: settings, snippets and extensions. JSON whose values are JSON strings. |
+| `apply_profile.py` | Run by both scripts with the Python they found: lists the profile's extensions and merges its settings and snippets into the user's VS Code. Standard library only. |
 | `.github/workflows/ci.yml` | Lint, profile privacy check, and real setup runs (piped and from the repo) on Windows, Ubuntu and macOS. |
 | `docs/using-ai.md` | Guide for students who code with an AI assistant. |
 | `.claude/skills/*/SKILL.md` | Step-by-step guides for common tasks. Any agent can read them, not just Claude. |
@@ -32,10 +33,11 @@ Before doing one of these tasks, read the matching guide and follow it:
 
 **Both scripts**
 
-- `setup.ps1` and `setup.sh` stay in step: same four steps (Python, pip / environment, PATH, libraries), same messages where possible. Change both, or say in the PR why only one needs it.
+- `setup.ps1` and `setup.sh` stay in step: same six steps (Python, pip / environment, PATH, libraries, fonts, VS Code), same messages where possible. Change both, or say in the PR why only one needs it.
 - No questions. The scripts run start to finish on their own. `--yes` / `-Yes` / `--all` / `-All` are accepted only so old commands still work.
 - Libraries come only from `requirements.txt`. Never hard-code a package list in a script.
-- VS Code extensions belong in the profile, never in the scripts.
+- VS Code extensions, settings and snippets belong in the profile, never in the scripts. The scripts read them from the profile through `apply_profile.py`.
+- Fonts come from the pinned google/fonts commit in `$FontUrl` / `FONT_URL` and must have a free license (OFL). Fonts and the VS Code step never stop the setup: a failure is reported in the summary.
 - Safe to run twice: no duplicate PATH entries, no broken existing install.
 - Command output goes to the log file (`python-dev-setup.log` in the temp folder); the screen shows short status lines only.
 - No new dependencies. The scripts must work on a fresh system.
