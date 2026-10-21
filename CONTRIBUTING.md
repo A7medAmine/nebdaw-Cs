@@ -69,7 +69,7 @@ Thanks for helping! nebdaw exists so that CS students can go from a fresh PC to 
 1. Add it to the matching group in both `setup.ps1` and `setup.sh`.
 2. Add it to the library table in `README.md`.
 3. Check that it installs from pre-built wheels on Windows, Linux and macOS. Students shouldn't need a C compiler for a default install.
-4. Keep the `core` group small. It installs by default, so every library there costs every student download time.
+4. Keep the groups small. Every group installs automatically, so each library costs every student download time.
 
 ## Changing the VS Code profile
 

@@ -1,11 +1,10 @@
 <#
 Python Dev setup for Windows.
 Installs Python 3 if needed, makes sure it is on PATH and installs common libraries
-into the same Python that "python" runs.
+into the same Python that "python" runs. For now it installs only numpy, without asking.
 
   setup.bat            interactive (double-click works)
-  setup.bat -Yes       accept defaults (core + dev libraries)
-  setup.bat -All       install every library group
+  setup.bat -Yes       no questions at all
 #>
 param(
     [switch]$Yes,
@@ -210,20 +209,9 @@ function Get-PythonPath([string]$Python, [string]$Code) {
 }
 
 # ---------- libraries ----------
+# Only numpy for now. Add $Core, $Data, $Web or $Dev here when they are needed.
 function Select-Packages {
-    if ($All) { return @($Core + $Data + $Web + $Dev) }
-    Write-Host '  Library groups' -ForegroundColor White
-    Write-Host '    core ' -ForegroundColor Cyan -NoNewline; Write-Host ($Core -join ' ')
-    Write-Host '    data ' -ForegroundColor Cyan -NoNewline; Write-Host ($Data -join ' ')
-    Write-Host '    web  ' -ForegroundColor Cyan -NoNewline; Write-Host ($Web -join ' ')
-    Write-Host '    dev  ' -ForegroundColor Cyan -NoNewline; Write-Host ($Dev -join ' ')
-    Write-Host ''
-    $list = @()
-    if (Read-YesNo 'Install core libraries?' $true) { $list += $Core }
-    if (Read-YesNo 'Install data science libraries?' $false) { $list += $Data }
-    if (Read-YesNo 'Install web libraries?' $false) { $list += $Web }
-    if (Read-YesNo 'Install dev tools?' $true) { $list += $Dev }
-    return $list
+    return @('numpy')
 }
 
 # ---------- main ----------

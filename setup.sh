@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 # Python Dev setup for Linux and macOS.
 # Installs Python 3, creates a shared environment at ~/.python-dev, adds it to PATH
-# and installs common libraries.
+# and installs libraries. For now it installs only numpy, without asking.
 #
 #   bash setup.sh            interactive
-#   bash setup.sh --yes      accept defaults (core + dev libraries)
-#   bash setup.sh --all      install every library group
+#   bash setup.sh --yes      no questions at all
 set -euo pipefail
 
 PY_VERSION="3.13.17"   # used only for the python.org macOS installer
@@ -21,12 +20,11 @@ DEV=(pytest ruff mypy)
 VSCODE_EXTENSIONS=(ms-python.python ms-python.vscode-pylance ms-python.debugpy charliermarsh.ruff)
 
 YES=0
-ALL=0
 for arg in "$@"; do
   case "$arg" in
     -y|--yes) YES=1 ;;
-    -a|--all) ALL=1; YES=1 ;;
-    -h|--help) sed -n '2,9p' "$0"; exit 0 ;;
+    -a|--all) YES=1 ;;   # kept for old commands
+    -h|--help) sed -n '2,8p' "$0"; exit 0 ;;
     *) echo "Unknown option: $arg"; exit 1 ;;
   esac
 done
@@ -199,21 +197,9 @@ add_to_path() {
 
 # ---------- libraries ----------
 PACKAGES=()
+# Only numpy for now. Add CORE, DATA, WEB or DEV here when they are needed.
 choose_packages() {
-  if [ "$ALL" = 1 ]; then
-    PACKAGES=("${CORE[@]}" "${DATA[@]}" "${WEB[@]}" "${DEV[@]}")
-    return
-  fi
-  printf "  ${BOLD}Library groups${RESET}\n"
-  printf "    ${CYAN}core${RESET}  %s\n" "${CORE[*]}"
-  printf "    ${CYAN}data${RESET}  %s\n" "${DATA[*]}"
-  printf "    ${CYAN}web ${RESET}  %s\n" "${WEB[*]}"
-  printf "    ${CYAN}dev ${RESET}  %s\n\n" "${DEV[*]}"
-  ask "Install core libraries?" y && PACKAGES+=("${CORE[@]}")
-  ask "Install data science libraries?" n && PACKAGES+=("${DATA[@]}")
-  ask "Install web libraries?" n && PACKAGES+=("${WEB[@]}")
-  ask "Install dev tools?" y && PACKAGES+=("${DEV[@]}")
-  return 0
+  PACKAGES=(numpy)
 }
 
 # ---------- main ----------

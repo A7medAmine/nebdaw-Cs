@@ -12,7 +12,7 @@ Works on **Windows**, **Linux** and **macOS**.
 
 ## 1. Set up Python
 
-The setup script installs Python 3 if it is missing, adds it to PATH, installs libraries and the VS Code Python extensions. It asks before each library group.
+The setup script installs Python 3 if it is missing, adds it to PATH, installs numpy without asking, and the VS Code Python extensions.
 
 **Windows:** double-click `setup.bat`.
 
@@ -22,14 +22,9 @@ The setup script installs Python 3 if it is missing, adds it to PATH, installs l
 bash setup.sh
 ```
 
-Options: `--yes` / `-Yes` accepts the defaults without asking, `--all` / `-All` installs every group.
+Options: `--yes` / `-Yes` runs without any questions (it also skips the VS Code extensions prompt).
 
-| Group | Libraries | Default |
-|---|---|---|
-| core | numpy, pandas, matplotlib, requests, rich, pillow, python-dotenv, tqdm, ipython | yes |
-| data | scipy, scikit-learn, seaborn, jupyterlab, openpyxl | no |
-| web | flask, fastapi, uvicorn, httpx, beautifulsoup4 | no |
-| dev | pytest, ruff, mypy | yes |
+For now it installs only **numpy**. The other library groups are listed in the scripts and will be turned on when the course needs them.
 
 How it works on each system:
 

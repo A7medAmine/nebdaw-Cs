@@ -68,7 +68,7 @@ jobs:
         if: runner.os != 'Windows'
         run: |
           bash setup.sh --yes || { cat "${TMPDIR:-/tmp}/python-dev-setup.log"; exit 1; }
-          "$HOME/.python-dev/bin/python" -c "import numpy, pandas, matplotlib, rich, pytest; print('imports ok')"
+          "$HOME/.python-dev/bin/python" -c "import numpy; print('imports ok')"
 
       - name: Run setup twice (must be safe)
         if: runner.os != 'Windows'
@@ -83,5 +83,5 @@ jobs:
         run: |
           .\setup.ps1 -Yes
           if ($LASTEXITCODE) { Get-Content "$env:TEMP\python-dev-setup.log"; exit 1 }
-          python -c "import numpy, pandas, matplotlib, rich, pytest; print('imports ok')"
+          python -c "import numpy; print('imports ok')"
           if ($LASTEXITCODE) { exit 1 }
