@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # Python Dev setup for Linux and macOS.
 # Installs Python 3, creates a shared environment at ~/.python-dev, adds it to PATH
-# and installs libraries. For now it installs only numpy, without asking.
+# and installs the libraries listed in requirements.txt.
 #
-#   bash setup.sh            interactive
-#   bash setup.sh --yes      no questions at all
+# It asks no questions. VS Code extensions come with the VS Code profile, not this script.
+#
+#   bash setup.sh
 set -euo pipefail
 
 PY_VERSION="3.13.17"   # used only for the python.org macOS installer
@@ -13,17 +14,13 @@ VENV_DIR="${PYDEV_HOME:-$HOME/.python-dev}"
 LOG_FILE="${TMPDIR:-/tmp}/python-dev-setup.log"
 MARKER="# Added by Python Dev setup"
 
-CORE=(numpy pandas matplotlib requests rich pillow python-dotenv tqdm ipython)
-DATA=(scipy scikit-learn seaborn jupyterlab openpyxl)
-WEB=(flask fastapi "uvicorn[standard]" httpx beautifulsoup4)
-DEV=(pytest ruff mypy)
-VSCODE_EXTENSIONS=(ms-python.python ms-python.vscode-pylance ms-python.debugpy charliermarsh.ruff)
+REQUIREMENTS="$(cd "$(dirname "$0")" && pwd)/requirements.txt"
+# Retry and wait longer than pip's defaults so slow connections don't fail the install.
+PIP_INSTALL=(-m pip install --upgrade --disable-pip-version-check --retries 5 --timeout 60)
 
-YES=0
 for arg in "$@"; do
   case "$arg" in
-    -y|--yes) YES=1 ;;
-    -a|--all) YES=1 ;;   # kept for old commands
+    -y|--yes|-a|--all) ;;   # no questions are left; kept so old commands still work
     -h|--help) sed -n '2,8p' "$0"; exit 0 ;;
     *) echo "Unknown option: $arg"; exit 1 ;;
   esac
@@ -42,7 +39,7 @@ case "${LC_ALL:-}${LC_CTYPE:-}${LANG:-}" in
 esac
 
 STEP=0
-TOTAL_STEPS=5
+TOTAL_STEPS=4
 
 banner() {
   printf "\n${CYAN}${BOLD}"
@@ -86,17 +83,6 @@ bar() {
     if [ "$j" -lt "$n" ]; then out+="$FULL"; else out+="$EMPTY"; fi
   done
   printf "%s %2d/%d" "$out" "$cur" "$total"
-}
-
-# ask "question" default(y/n)
-ask() {
-  local q=$1 def=$2 hint ans
-  [ "$def" = y ] && hint="Y/n" || hint="y/N"
-  if [ "$YES" = 1 ]; then [ "$def" = y ]; return; fi
-  printf "  ${BOLD}?${RESET} %s ${DIM}[%s]${RESET} " "$q" "$hint"
-  read -r ans </dev/tty || ans=""
-  ans=${ans:-$def}
-  [[ "$ans" =~ ^[Yy] ]]
 }
 
 # ---------- python ----------
@@ -197,9 +183,16 @@ add_to_path() {
 
 # ---------- libraries ----------
 PACKAGES=()
-# Only numpy for now. Add CORE, DATA, WEB or DEV here when they are needed.
-choose_packages() {
-  PACKAGES=(numpy)
+# One library per line in requirements.txt; blank lines and # comments are skipped.
+read_packages() {
+  [ -f "$REQUIREMENTS" ] || die "Library list not found: $REQUIREMENTS"
+  local line
+  while IFS= read -r line || [ -n "$line" ]; do
+    line=${line%%#*}
+    line=$(printf '%s' "$line" | tr -d '[:space:]')
+    [ -n "$line" ] && PACKAGES+=("$line")
+  done <"$REQUIREMENTS"
+  return 0
 }
 
 # ---------- main ----------
@@ -231,13 +224,13 @@ else
   ensure_venv_module
   spin "Creating environment at ${VENV_DIR/#$HOME/~}" "$PYTHON" -m venv "$VENV_DIR" || die "Could not create the environment"
 fi
-spin "Upgrading pip" "$VPY" -m pip install --upgrade pip || warn "pip upgrade failed, continuing"
+spin "Upgrading pip" "$VPY" "${PIP_INSTALL[@]}" pip || warn "pip upgrade failed, continuing"
 
 step "Adding Python to PATH"
 add_to_path
 
 step "Installing libraries"
-choose_packages
+read_packages
 FAILED=()
 if [ "${#PACKAGES[@]}" -eq 0 ]; then
   info "No libraries selected"
@@ -246,22 +239,17 @@ else
   i=0
   for pkg in "${PACKAGES[@]}"; do
     i=$((i + 1))
-    spin "$(bar "$i" "$n")  $pkg" "$VPY" -m pip install --upgrade --disable-pip-version-check "$pkg" || FAILED+=("$pkg")
+    spin "$(bar "$i" "$n")  $pkg" "$VPY" "${PIP_INSTALL[@]}" "$pkg" || FAILED+=("$pkg")
   done
 fi
-
-step "VS Code extensions"
-if command -v code >/dev/null 2>&1; then
-  if ask "Install Python extensions for VS Code?" y; then
-    for ext in "${VSCODE_EXTENSIONS[@]}"; do
-      spin "$ext" code --install-extension "$ext" --force || warn "Could not install $ext"
-    done
-  else
-    info "Skipped"
-  fi
-else
-  info "VS Code command 'code' not found, skipped"
-fi
+# numpy is what the course uses, so make sure it really loads.
+case " ${PACKAGES[*]-} " in
+  *" numpy "*)
+    case " ${FAILED[*]-} " in
+      *" numpy "*) ;;
+      *) spin "Checking that numpy works" "$VPY" -c "import numpy" || FAILED+=(numpy) ;;
+    esac ;;
+esac
 
 # ---------- summary ----------
 printf "\n${GREEN}${BOLD}  +------------------------------------------+\n"

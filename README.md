@@ -12,7 +12,7 @@ Works on **Windows**, **Linux** and **macOS**.
 
 ## 1. Set up Python
 
-The setup script installs Python 3 if it is missing, adds it to PATH, installs numpy without asking, and the VS Code Python extensions.
+The setup script installs Python 3 if it is missing, adds it to PATH, and installs the libraries. It asks no questions. The VS Code extensions come with the profile in step 2.
 
 **Windows:** double-click `setup.bat`.
 
@@ -22,9 +22,7 @@ The setup script installs Python 3 if it is missing, adds it to PATH, installs n
 bash setup.sh
 ```
 
-Options: `--yes` / `-Yes` runs without any questions (it also skips the VS Code extensions prompt).
-
-For now it installs only **numpy**. The other library groups are listed in the scripts and will be turned on when the course needs them.
+The libraries come from [`requirements.txt`](requirements.txt). For now that is only **numpy**; the other libraries are listed there as comments and will be turned on when the course needs them. At the end the setup checks that numpy imports.
 
 How it works on each system:
 

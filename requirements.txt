@@ -1,0 +1,34 @@
+# Libraries installed by setup.ps1 (Windows) and setup.sh (Linux / macOS).
+# One library per line. Remove the "# " in front of a line to install it too.
+# You can also use this file yourself: python -m pip install -r requirements.txt
+
+numpy
+
+# core
+# pandas
+# matplotlib
+# requests
+# rich
+# pillow
+# python-dotenv
+# tqdm
+# ipython
+
+# data
+# scipy
+# scikit-learn
+# seaborn
+# jupyterlab
+# openpyxl
+
+# web
+# flask
+# fastapi
+# uvicorn[standard]
+# httpx
+# beautifulsoup4
+
+# dev
+# pytest
+# ruff
+# mypy

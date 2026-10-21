@@ -1,11 +1,13 @@
 <#
 Python Dev setup for Windows.
 Installs Python 3 if needed, makes sure it is on PATH and installs common libraries
-into the same Python that "python" runs. For now it installs only numpy, without asking.
+into the same Python that "python" runs. The libraries come from requirements.txt.
 
-  setup.bat            interactive (double-click works)
-  setup.bat -Yes       no questions at all
+It asks no questions. VS Code extensions come with the VS Code profile, not this script.
+
+  setup.bat            double-click works too
 #>
+# -Yes and -All are no longer needed; they are kept so old commands still work.
 param(
     [switch]$Yes,
     [switch]$All
@@ -17,19 +19,15 @@ $ProgressPreference = 'SilentlyContinue'
 $PyVersion = '3.13.17'
 $MinMinor = 10
 $LogFile = Join-Path $env:TEMP 'python-dev-setup.log'
+$Requirements = Join-Path $PSScriptRoot 'requirements.txt'
 
-$Core = @('numpy', 'pandas', 'matplotlib', 'requests', 'rich', 'pillow', 'python-dotenv', 'tqdm', 'ipython')
-$Data = @('scipy', 'scikit-learn', 'seaborn', 'jupyterlab', 'openpyxl')
-$Web = @('flask', 'fastapi', 'uvicorn[standard]', 'httpx', 'beautifulsoup4')
-$Dev = @('pytest', 'ruff', 'mypy')
-$VSCodeExtensions = @('ms-python.python', 'ms-python.vscode-pylance', 'ms-python.debugpy', 'charliermarsh.ruff')
-
-if ($All) { $Yes = $true }
+# Retry and wait longer than pip's defaults so slow connections don't fail the install.
+$PipInstall = @('-m', 'pip', 'install', '--upgrade', '--disable-pip-version-check', '--retries', '5', '--timeout', '60')
 
 # ---------- look ----------
 $script:Step = 0
 $Interactive = -not [Console]::IsOutputRedirected
-$TotalSteps = 5
+$TotalSteps = 4
 
 function Write-Banner {
     Write-Host ''
@@ -103,15 +101,6 @@ function Get-Bar([int]$Current, [int]$Total) {
     $width = 24
     $filled = [int][Math]::Floor($Current * $width / $Total)
     ('#' * $filled) + ('-' * ($width - $filled)) + ' ' + ('{0,2}/{1}' -f $Current, $Total)
-}
-
-function Read-YesNo([string]$Question, [bool]$Default) {
-    if ($Yes) { return $Default }
-    $hint = if ($Default) { 'Y/n' } else { 'y/N' }
-    Write-Host '  ? ' -ForegroundColor White -NoNewline
-    $answer = Read-Host "$Question [$hint]"
-    if ([string]::IsNullOrWhiteSpace($answer)) { return $Default }
-    return $answer -match '^[Yy]'
 }
 
 # ---------- python ----------
@@ -209,9 +198,10 @@ function Get-PythonPath([string]$Python, [string]$Code) {
 }
 
 # ---------- libraries ----------
-# Only numpy for now. Add $Core, $Data, $Web or $Dev here when they are needed.
-function Select-Packages {
-    return @('numpy')
+# One library per line in requirements.txt; blank lines and # comments are skipped.
+function Read-Packages {
+    if (-not (Test-Path $Requirements)) { Stop-Setup "Library list not found: $Requirements" }
+    return @(Get-Content $Requirements | ForEach-Object { ($_ -replace '#.*', '').Trim() } | Where-Object { $_ })
 }
 
 # ---------- main ----------
@@ -238,7 +228,7 @@ if (-not (Invoke-Spin 'Checking pip' $python @('-m', 'pip', '--version'))) {
 $siteWritable = (Get-PythonPath $python 'import os, sysconfig; print(os.access(sysconfig.get_paths()[''purelib''], os.W_OK))') -eq 'True'
 $pipUser = if ($siteWritable) { @() } else { @('--user') }
 if (-not $siteWritable) { Write-Info 'Python folder is read-only for you, libraries go to your user folder' }
-if (-not (Invoke-Spin 'Upgrading pip' $python (@('-m', 'pip', 'install', '--upgrade', '--disable-pip-version-check') + $pipUser + 'pip'))) {
+if (-not (Invoke-Spin 'Upgrading pip' $python ($PipInstall + $pipUser + 'pip'))) {
     Write-Warn 'pip upgrade failed, continuing'
 }
 
@@ -258,7 +248,7 @@ if ($first -and ($first -ne $python)) {
 }
 
 Write-Step 'Installing libraries'
-$packages = @(Select-Packages)
+$packages = @(Read-Packages)
 $failed = @()
 if ($packages.Count -eq 0) {
     Write-Info 'No libraries selected'
@@ -266,26 +256,14 @@ if ($packages.Count -eq 0) {
     for ($i = 0; $i -lt $packages.Count; $i++) {
         $pkg = $packages[$i]
         $label = "$(Get-Bar ($i + 1) $packages.Count)  $pkg"
-        if (-not (Invoke-Spin $label $python (@('-m', 'pip', 'install', '--upgrade', '--disable-pip-version-check') + $pipUser + $pkg))) {
+        if (-not (Invoke-Spin $label $python ($PipInstall + $pipUser + $pkg))) {
             $failed += $pkg
         }
     }
 }
-
-Write-Step 'VS Code extensions'
-$code = Get-Command code -ErrorAction SilentlyContinue
-if ($code) {
-    if (Read-YesNo 'Install Python extensions for VS Code?' $true) {
-        foreach ($ext in $VSCodeExtensions) {
-            if (-not (Invoke-Spin $ext $code.Source @('--install-extension', $ext, '--force'))) {
-                Write-Warn "Could not install $ext"
-            }
-        }
-    } else {
-        Write-Info 'Skipped'
-    }
-} else {
-    Write-Info "VS Code command 'code' not found, skipped"
+# numpy is what the course uses, so make sure it really loads.
+if (($packages -contains 'numpy') -and ($failed -notcontains 'numpy')) {
+    if (-not (Invoke-Spin 'Checking that numpy works' $python @('-c', 'import numpy'))) { $failed += 'numpy' }
 }
 
 # ---------- summary ----------

@@ -37,17 +37,19 @@ Thanks for helping! nebdaw exists so that CS students can go from a fresh PC to 
 | `setup.bat` | Double-click launcher for Windows; runs `setup.ps1` |
 | `setup.ps1` | Windows setup (PowerShell) |
 | `setup.sh` | Linux and macOS setup (Bash) |
+| `requirements.txt` | Libraries the setup scripts install |
 | `python-dev.code-profile` | VS Code profile: settings, snippets and extensions |
 | `.github/workflows/ci.yml` | Checks that run on every pull request |
 
 ## Rules for the setup scripts
 
-`setup.ps1` and `setup.sh` must stay in step: same five steps, same library groups, same options and the same order of questions. If you change one, change the other, or say in the PR why only one needs it.
+`setup.ps1` and `setup.sh` must stay in step: same four steps and the same options. Both read the library list from `requirements.txt`. If you change one, change the other, or say in the PR why only one needs it.
 
 **Both scripts**
 
 - Safe to run twice. A second run must not duplicate PATH entries or break an existing install.
-- Ask before anything slow or optional; `--yes` / `-Yes` must run without any questions.
+- No questions. The scripts run start to finish on their own.
+- VS Code extensions belong in `python-dev.code-profile`, not in the scripts.
 - Ask for admin rights (sudo) only for steps that need them.
 - Send command output to the log file and keep the screen to short status lines.
 - No new dependencies. The scripts must work on a fresh system with nothing installed.
@@ -66,10 +68,9 @@ Thanks for helping! nebdaw exists so that CS students can go from a fresh PC to 
 
 ### Adding a library
 
-1. Add it to the matching group in both `setup.ps1` and `setup.sh`.
-2. Add it to the library table in `README.md`.
-3. Check that it installs from pre-built wheels on Windows, Linux and macOS. Students shouldn't need a C compiler for a default install.
-4. Keep the groups small. Every group installs automatically, so each library costs every student download time.
+1. Add it to `requirements.txt` under the matching group, or remove the `# ` in front of its line if it is already listed. Both setup scripts read this file.
+2. Check that it installs from pre-built wheels on Windows, Linux and macOS. Students shouldn't need a C compiler.
+3. Keep the list short. Every library in it installs automatically, so each one costs every student download time.
 
 ## Changing the VS Code profile
 
@@ -103,7 +104,7 @@ $errors.Count   # must be 0
 For a real run without touching your own setup, use a virtual machine, Windows Sandbox or WSL. On Linux and macOS you can also point the environment somewhere temporary:
 
 ```sh
-PYDEV_HOME=/tmp/nebdaw-test bash setup.sh --yes
+PYDEV_HOME=/tmp/nebdaw-test bash setup.sh
 ```
 
 Note that this still edits your shell startup files to add the PATH line.
