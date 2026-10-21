@@ -48,6 +48,58 @@ Fonts needed: **Cascadia Mono** (editor) and **Aljazeera** (Arabic fallback).
 - Pylance basic type checking, ruler at 88 columns.
 - Code Runner runs in the terminal, so `input()` and `scanf` work.
 
+## Changing the theme
+
+The profile uses **Dracula Theme** for colors and **Material Icon Theme** for file icons.
+
+### Quick way
+
+1. Press `Ctrl+K` then `Ctrl+T` (macOS: `Cmd+K` then `Cmd+T`).
+2. Use the arrow keys to preview themes live.
+3. Press `Enter` to keep one, or `Esc` to go back.
+
+Themes already included in the profile:
+
+| Theme | From |
+|---|---|
+| `Dracula Theme` (current) | Dracula Official |
+| `Ayu Dark`, `Ayu Mirage`, `Ayu Light` | Ayu |
+| `Material Palenight` | Material Palenight Theme |
+| `Default Dark Modern`, `Default Light Modern`, `Default Dark+` | Built into VS Code |
+
+### Install a new theme
+
+1. Open the Extensions view (`Ctrl+Shift+X`).
+2. Search `@category:themes`, or a theme name such as `One Dark Pro` or `GitHub Theme`.
+3. Click **Install**, then pick it with `Ctrl+K` `Ctrl+T`.
+
+### Change the file icons
+
+`Ctrl+Shift+P` → **Preferences: File Icon Theme**, then pick one (for example `Material Icon Theme`, `Seti` or `Minimal`).
+
+### Change it in settings.json
+
+`Ctrl+Shift+P` → **Preferences: Open User Settings (JSON)** and edit these lines:
+
+```jsonc
+"workbench.colorTheme": "Ayu Mirage",
+"workbench.iconTheme": "material-icon-theme",
+```
+
+### Follow the system light/dark mode
+
+Add these lines to switch themes automatically when Windows or macOS changes between light and dark:
+
+```jsonc
+"window.autoDetectColorScheme": true,
+"workbench.preferredDarkColorTheme": "Dracula Theme",
+"workbench.preferredLightColorTheme": "Ayu Light",
+```
+
+### Save the new theme into the profile file
+
+The steps above change only your own VS Code. To share the new theme, export the profile again (see [Editing](#editing)).
+
 ## Python snippets
 
 Type the prefix, press `Tab`.
