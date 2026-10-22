@@ -186,6 +186,7 @@ If you use an AI agent to contribute to this repository, it reads [AGENTS.md](AG
 
 Everyone is welcome, whether you're fixing a typo or adding a new feature. You can also help without writing code: test the setup on your PC, report bugs, suggest libraries or translate the docs.
 
+- New to GitHub? Make your first pull request by [adding your name to the contributors list](docs/first-contribution.md).
 - Read the [contributing guide](CONTRIBUTING.md) to get started.
 - Look for issues labelled [`good first issue`](https://github.com/A7medAmine/nebdaw-Cs/labels/good%20first%20issue).
 - Please follow the [code of conduct](CODE_OF_CONDUCT.md).
