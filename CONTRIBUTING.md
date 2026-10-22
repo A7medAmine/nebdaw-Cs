@@ -4,6 +4,7 @@ Thanks for helping! nebdaw exists so that CS students can go from a fresh PC to 
 
 ## Ways to help
 
+- **Add your name.** Never made a pull request? [Your first contribution](docs/first-contribution.md) walks you through adding yourself to [CONTRIBUTORS.md](CONTRIBUTORS.md), all in the browser.
 - **Test it on your PC.** Run the setup on your system and [open an issue](https://github.com/A7medAmine/nebdaw-Cs/issues/new/choose) saying what worked and what didn't. Reports from old laptops, slow connections and unusual Linux distros are especially useful.
 - **Report bugs.** Use the bug report template and attach the log file (see [Logs](#logs)).
 - **Suggest things.** A library your course uses, a snippet you type all the time, or an extension students should have.
@@ -44,6 +45,8 @@ Thanks for helping! nebdaw exists so that CS students can go from a fresh PC to 
 | `AGENTS.md`, `CLAUDE.md` | Rules for AI coding agents |
 | `.claude/skills/` | Step-by-step guides for common tasks, for people and AI agents |
 | `docs/using-ai.md` | Guide for students who code with an AI assistant |
+| `docs/first-contribution.md` | Step-by-step first pull request: add your name to `CONTRIBUTORS.md` |
+| `CONTRIBUTORS.md` | Everyone who has helped |
 
 ## Rules for the setup scripts
 

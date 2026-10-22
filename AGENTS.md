@@ -18,6 +18,7 @@ nebdaw sets up a CS student's PC in one step: it installs Python, adds it to PAT
 | `apply_profile.py` | Run by both scripts with the Python they found: lists the profile's extensions and merges its settings and snippets into the user's VS Code. Standard library only. |
 | `.github/workflows/ci.yml` | Lint, profile privacy check, and real setup runs (piped and from the repo) on Windows, Ubuntu and macOS. |
 | `docs/using-ai.md` | Guide for students who code with an AI assistant. |
+| `docs/first-contribution.md`, `CONTRIBUTORS.md` | First-PR guide for newcomers and the list of contributors they add themselves to. |
 | `.claude/skills/*/SKILL.md` | Step-by-step guides for common tasks. Any agent can read them, not just Claude. |
 
 ## Task guides
